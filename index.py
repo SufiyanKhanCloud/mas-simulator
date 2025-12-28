@@ -682,7 +682,8 @@ def raise_frame(frame):
 # --- Main Window ---
 root = tk.Tk()
 root.title("Queue Simulator")
-root.state('zoomed')  # Full screen mode
+root.attributes('-fullscreen', True)  # Full screen on Linux, Windows, macOS
+#root.state('zoomed')  # Full screen mode
 
 main_frame = tk.Frame(root)
 mm1_frame = tk.Frame(root)
