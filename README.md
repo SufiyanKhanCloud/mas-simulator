@@ -95,28 +95,23 @@ docker run -it --rm \
 
 ---
 
-📌 Current Status
+## 📌 Current Status
 
-✔ Application running successfully in Docker
-✔ CI/CD pipeline implemented
-✔ Docker image automatically published
-
-
----
-
-🔜 Future Enhancements
-
-Cloud deployment (AWS EC2)
-
-Headless mode for server environments
-
-Monitoring & logging
-
-
+- ✔ Application running successfully inside Docker
+- ✔ CI/CD pipeline implemented using GitHub Actions
+- ✔ Docker image automatically built and published to Docker Hub
 
 ---
 
-👤 Author
+## 🔜 Future Enhancements
 
-Sufiyan Khan
+- ☁️ Cloud deployment on AWS EC2
+- 🖥️ Headless execution mode for server environments
+- 📊 Monitoring and logging integration
+
+---
+
+## 👤 Author
+
+**Sufiyan Khan**  
 DevOps & Cloud Enthusiast
