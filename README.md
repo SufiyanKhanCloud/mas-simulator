@@ -2,7 +2,6 @@
 
 A Queueing Theory Simulator implementing **M/M/1** and **M/M/S** models using Python and Tkinter, fully containerized and automated using CI/CD best practices.
 
-![CI](https://github.com/SufiyanKhanCloud/mas-simulator/actions/workflows/docker-ci.yml/badge.svg)
 ![Docker](https://img.shields.io/badge/Docker-Automated-blue)
 
 ---
