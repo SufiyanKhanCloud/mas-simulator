@@ -101,7 +101,6 @@ docker run -it --rm \
 - ✔ CI/CD pipeline implemented using GitHub Actions
 - ✔ Docker image automatically built and published to Docker Hub
 
----
 
 # 🔜 Future Enhancements
 
@@ -109,9 +108,11 @@ docker run -it --rm \
 - 🖥️ Headless execution mode for server environments
 - 📊 Monitoring and logging integration
 
----
 
 # 👤 Author
 
 **Sufiyan Khan**  
 DevOps & Cloud Enthusiast
+
+---
+
