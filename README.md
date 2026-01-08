@@ -4,6 +4,7 @@ A Queueing Theory Simulator implementing **M/M/1** and **M/M/S** models using Py
 
 ![Docker](https://img.shields.io/badge/Docker-Automated-blue)
 
+
 ---
 
 ## 🚀 Project Overview
@@ -83,7 +84,7 @@ The image is automatically updated on every push to `main`.
 
 ### Command
 
-```bash
+
 xhost +local:docker
 
 docker run -it --rm \
@@ -115,4 +116,4 @@ docker run -it --rm \
 DevOps & Cloud Enthusiast
 
 ---
-
+```bash
