@@ -578,6 +578,11 @@ def mm1_input_page():
             messagebox.showerror("Error", f"An unexpected error occurred:\n{e}")
 
     # --- Simulate Button ---
+    # check button added for mm1
+    tk.Checkbutton(container, text="Enable Priority Scheduling", 
+                   variable=use_priority_var, font=("Arial", 12, "bold"),
+                   bg="#666633", fg="white", selectcolor="#333311",
+                   activebackground="#666633", activeforeground="white").pack(pady=10)
     shadow_simulate = tk.Frame(container, bg="#333311")
     shadow_simulate.pack(pady=15)
     btn_simulate = tk.Button(shadow_simulate, text="Simulate", font=("Arial", 16, "bold"),
@@ -672,6 +677,11 @@ def mms_input_page():
             messagebox.showerror("Error", f"An unexpected error occurred:\n{e}")
 
     # --- Simulate Button ---
+    # check button added for mms
+    tk.Checkbutton(container, text="Enable Priority Scheduling", 
+                   variable=use_priority_var, font=("Arial", 12, "bold"),
+                   bg="#666633", fg="white", selectcolor="#333311",
+                   activebackground="#666633", activeforeground="white").pack(pady=10)
     shadow_simulate = tk.Frame(container, bg="#333311")
     shadow_simulate.pack(pady=15)
     btn_simulate = tk.Button(shadow_simulate, text="Simulate", font=("Arial", 16, "bold"),
@@ -704,6 +714,8 @@ root = tk.Tk()
 root.title("Queue Simulator")
 root.attributes('-fullscreen', True)  # Full screen on Linux, Windows, macOS
 #root.state('zoomed')  # Full screen mode
+# check box added
+use_priority_var = tk.BooleanVar(value=False)
 
 main_frame = tk.Frame(root)
 mm1_frame = tk.Frame(root)
