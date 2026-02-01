@@ -59,6 +59,8 @@ def mm1_simulation(lambda_val, mu_val):
     # service_times = [round(-mu_val * math.log(np.random.rand())) for _ in range(len(arrival_times))]
     # Fixed the zero service time issue
     service_times = [max(1, math.ceil(-mu_val * math.log(np.random.rand()))) for _ in range(len(arrival_times))]
+    # NEW: Generate Priorities 1-3 (1=High, 3=Low)
+    priorities = [np.random.randint(1, 4) for _ in range(len(arrival_times))]
     service_starts = [0] * len(arrival_times)
     service_ends = [0] * len(arrival_times)
 
@@ -83,6 +85,7 @@ def mm1_simulation(lambda_val, mu_val):
         "Inter-arrivals": inter_arrivals,
         "Arrival Times": arrival_times.astype(int),
         "Service Time": service_times,
+        "Priority": priorities,
         "Service Start": service_starts,
         "Service End": service_ends,
         "Turnaround Time": turnaround_times,
@@ -161,6 +164,8 @@ def mms_simulation(lambda_val, mu_val, servers):
     # service_times = [round(-mu_val * math.log(np.random.rand())) for _ in range(len(arrival_times))]
     # Fixed the zero service time issue
     service_times = [max(1, math.ceil(-mu_val * math.log(np.random.rand()))) for _ in range(len(arrival_times))]
+    # NEW: Generate Priorities 1-3
+    priorities = [np.random.randint(1, 4) for _ in range(len(arrival_times))]
 
     # --- Multi-server scheduling logic ---
     server_end_times = [0] * servers  # track end time of each server
@@ -215,6 +220,7 @@ def mms_simulation(lambda_val, mu_val, servers):
         "Inter-arrivals": inter_arrivals,
         "Arrival Times": arrival_times.astype(int),
         "Service Time": service_times,
+        "Priority": priorities,
         "Service Start": service_start,
         "Service End": service_end,
         "Server": server_assigned,
