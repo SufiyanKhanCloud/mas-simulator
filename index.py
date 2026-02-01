@@ -537,7 +537,6 @@ def draw_mms_gantt(chunks, scrollable_frame, num_servers):
     # 3. Draw a separate chart for each server
     for s_idx in range(num_servers):
         srv_name = f"S{s_idx + 1}"
-        # Filter chunks belonging only to this server
         srv_chunks = [c for c in chunks if c[3] == srv_name]
         
         if not srv_chunks:
@@ -573,11 +572,19 @@ def draw_mms_gantt(chunks, scrollable_frame, num_servers):
         ax.set_xlim(-0.5, boxes_per_row * box_width + 0.5)
         ax.set_ylim(-num_rows * row_height_gap + 1, 2)
         ax.axis('off')
-        ax.set_title(f"Server {s_idx + 1} Utilization Timeline", color="white", fontweight="bold", pad=20)
+
+        # --- FIX: ADD NATIVE TKINTER LABEL BEFORE THE CHART ---
+        tk.Label(
+            scrollable_frame,
+            text=f"Server {s_idx + 1} Utilization Timeline",
+            font=("Arial", 16, "bold"),
+            fg="white",
+            bg="#666633"
+        ).pack(pady=(20, 5))
 
         canvas = FigureCanvasTkAgg(fig, master=scrollable_frame)
         canvas.draw()
-        canvas.get_tk_widget().pack(pady=20, fill="x")
+        canvas.get_tk_widget().pack(pady=(0, 20), fill="x")
 
 
 # MM1 Input page container
