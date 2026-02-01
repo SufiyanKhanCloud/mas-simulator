@@ -181,30 +181,76 @@ def mms_simulation(lambda_val, mu_val, servers):
     #     # Start time is max(arrival time, server free time)
 
     #Fixed the issue of assigning to the wrong server 179-191
-    for i in range(len(arrival_times)):
-        # 1. Identify which servers are currently idle (free)
-        free_servers = [idx for idx, end_time in enumerate(server_end_times) if end_time <= arrival_times[i]]
+    # for i in range(len(arrival_times)):
+    #     # 1. Identify which servers are currently idle (free)
+    #     free_servers = [idx for idx, end_time in enumerate(server_end_times) if end_time <= arrival_times[i]]
 
-        if free_servers:
-            # 2. If servers are free, pick the one with the lowest index (Priority: S1 > S2 > S3)
-            server_idx = min(free_servers)
-            next_available = server_end_times[server_idx]
+    #     if free_servers:
+    #         # 2. If servers are free, pick the one with the lowest index (Priority: S1 > S2 > S3)
+    #         server_idx = min(free_servers)
+    #         next_available = server_end_times[server_idx]
+    #     else:
+    #         # 3. If all busy, pick the one that finishes earliest
+    #         next_available = min(server_end_times)
+    #         server_idx = server_end_times.index(next_available)
+
+    #     # Start time is max(arrival time, next_available)
+    #     start_time = max(arrival_times[i], next_available)
+    #     end_time = start_time + service_times[i]
+
+    #     # Update that server’s end time
+    #     server_end_times[server_idx] = end_time
+
+    #     # Record info
+    #     service_start.append(start_time)
+    #     service_end.append(end_time)
+    #     server_assigned.append(f"S{server_idx + 1}")
+
+    # --- Priority-Aware Scheduling Logic ---
+    server_end_times = [0] * servers
+    service_start = [0] * len(arrival_times)
+    service_end = [0] * len(arrival_times)
+    server_assigned = [""] * len(arrival_times)
+    
+    # Track which customers have been served
+    served_mask = [False] * len(arrival_times)
+    customers_served = 0
+
+    while customers_served < len(arrival_times):
+        # 1. Find when the next server becomes available
+        next_free_time = min(server_end_times)
+        
+        # 2. Identify candidates (those who arrived by next_free_time and aren't served)
+        candidates = [i for i in range(len(arrival_times)) 
+                      if not served_mask[i] and arrival_times[i] <= next_free_time]
+        
+        if not candidates:
+            # If no one is waiting, the server must wait for the absolute next arrival
+            chosen_idx = next(i for i, served in enumerate(served_mask) if not served)
         else:
-            # 3. If all busy, pick the one that finishes earliest
-            next_available = min(server_end_times)
-            server_idx = server_end_times.index(next_available)
+            # PRIORITY LOGIC: Check the UI toggle we created in Phase 1
+            if use_priority_var.get():
+                # Pick the highest priority (lowest number 1, 2, or 3)
+                chosen_idx = min(candidates, key=lambda x: priorities[x])
+            else:
+                # Standard FIFO (Earliest arrival)
+                chosen_idx = min(candidates)
 
-        # Start time is max(arrival time, next_available)
-        start_time = max(arrival_times[i], next_available)
-        end_time = start_time + service_times[i]
+        # 3. Server Selection: Prioritize S1 if multiple are free
+        free_servers = [idx for idx, end_time in enumerate(server_end_times) if end_time <= arrival_times[chosen_idx]]
+        server_idx = min(free_servers) if free_servers else server_end_times.index(next_free_time)
 
-        # Update that server’s end time
-        server_end_times[server_idx] = end_time
+        # 4. Calculate Timings
+        s_start = max(arrival_times[chosen_idx], server_end_times[server_idx])
+        s_end = s_start + service_times[chosen_idx]
 
-        # Record info
-        service_start.append(start_time)
-        service_end.append(end_time)
-        server_assigned.append(f"S{server_idx + 1}")
+        # 5. Record and Update
+        service_start[chosen_idx] = s_start
+        service_end[chosen_idx] = s_end
+        server_assigned[chosen_idx] = f"S{server_idx + 1}"
+        server_end_times[server_idx] = s_end
+        served_mask[chosen_idx] = True
+        customers_served += 1
 
     # --- Additional Performance Metrics ---
     turnaround_times = [service_end[i] - arrival_times[i] for i in range(len(arrival_times))]
