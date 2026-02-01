@@ -54,27 +54,76 @@ def mm1_simulation(lambda_val, mu_val):
 
     arrival_times = np.cumsum(inter_arrivals)
     obs_numbers = list(range(1, len(arrival_times) + 1))
-
-    # --- New Columns: Service Time, Start Time, End Time ---
-    # service_times = [round(-mu_val * math.log(np.random.rand())) for _ in range(len(arrival_times))]
-    # Fixed the zero service time issue
     service_times = [max(1, math.ceil(-mu_val * math.log(np.random.rand()))) for _ in range(len(arrival_times))]
     # NEW: Generate Priorities 1-3 (1=High, 3=Low)
     priorities = [np.random.randint(1, 4) for _ in range(len(arrival_times))]
+    # NEW STEP 1: Track remaining time to allow for interrupts
+    remaining_times = list(service_times)
     service_starts = [0] * len(arrival_times)
     service_ends = [0] * len(arrival_times)
+    service_chunks = [] # To store (Customer, Start, End) for the Gantt chart
 
-    for i in range(len(arrival_times)):
-        if i == 0:
-            service_starts[i] = arrival_times[i]
+    # NEW STEP 2: Preemptive Logic for M/M/1
+    service_starts = [-1] * len(arrival_times)
+    service_ends = [0] * len(arrival_times)
+    served_mask = [False] * len(arrival_times)
+    
+    current_time = 0
+    active_customer = None # Who is on the server right now?
+    
+    # We create a timeline of all arrival times to check for interrupts
+    all_events = sorted(list(set(arrival_times)))
+    
+
+    while not all(served_mask):
+        # 1. Identify who has arrived and is waiting
+        waiting_pool = [i for i in range(len(arrival_times)) 
+                        if not served_mask[i] and arrival_times[i] <= current_time]
+        
+        if not waiting_pool:
+            current_time = min([arrival_times[i] for i in range(len(arrival_times)) if not served_mask[i]])
+            continue
+
+        # 2. Selection: Pick the highest superiority (1 is best)
+        if use_priority_var.get():
+            chosen_idx = min(waiting_pool, key=lambda x: priorities[x])
         else:
-            service_starts[i] = max(arrival_times[i], service_ends[i - 1])
-        service_ends[i] = service_starts[i] + service_times[i]
+            chosen_idx = min(waiting_pool)
 
-    # --- Additional Performance Columns ---
+        # Record First Touch (for Response Time)
+        if service_starts[chosen_idx] == -1:
+            service_starts[chosen_idx] = current_time
+
+        # 3. Hijack Logic: Check if a superior priority is coming
+        interruptors = [i for i in range(len(arrival_times)) 
+                        if arrival_times[i] > current_time and priorities[i] < priorities[chosen_idx]]
+        
+        if interruptors and use_priority_var.get():
+            next_interrupt_time = min([arrival_times[i] for i in interruptors])
+            time_to_event = next_interrupt_time - current_time
+        else:
+            time_to_event = remaining_times[chosen_idx]
+        
+        # 4. Process the work chunk
+        work_duration = min(remaining_times[chosen_idx], time_to_event)
+        
+        start_chunk = current_time
+        current_time += work_duration
+        remaining_times[chosen_idx] -= work_duration
+        
+        # RECORD CHUNK: This ensures the Gantt Chart shows the split
+        service_chunks.append((f"C{chosen_idx + 1}", start_chunk, current_time))
+        
+        # 5. Finalize if done
+        if remaining_times[chosen_idx] == 0:
+            service_ends[chosen_idx] = current_time
+            served_mask[chosen_idx] = True
+
+    # --- Performance Metrics for Preemptive Logic ---
+    # These must be calculated after the loop finishes so the final values are available
     turnaround_times = [service_ends[i] - arrival_times[i] for i in range(len(arrival_times))]
     wait_times = [turnaround_times[i] - service_times[i] for i in range(len(arrival_times))]
-    response_times = [service_starts[i] - arrival_times[i] for i in range(len(arrival_times))]
+    response_times = [service_starts[i] - arrival_times[i] for i in range(len(arrival_times))]        
 
     # --- Create DataFrame ---
     df = pd.DataFrame({
@@ -106,7 +155,7 @@ def mm1_simulation(lambda_val, mu_val):
         "Response Time": int
     })
 
-    return df
+    return df, service_chunks
 
 def mms_simulation(lambda_val, mu_val, servers):
     # --- Safety & setup ---
@@ -161,7 +210,6 @@ def mms_simulation(lambda_val, mu_val, servers):
     obs_numbers = list(range(1, len(arrival_times) + 1))
 
     # --- Service times (Exponential Distribution) ---
-    # service_times = [round(-mu_val * math.log(np.random.rand())) for _ in range(len(arrival_times))]
     # Fixed the zero service time issue
     service_times = [max(1, math.ceil(-mu_val * math.log(np.random.rand()))) for _ in range(len(arrival_times))]
     # NEW: Generate Priorities 1-3
@@ -172,39 +220,6 @@ def mms_simulation(lambda_val, mu_val, servers):
     service_start = []
     service_end = []
     server_assigned = []
-
-    # for i in range(len(arrival_times)):  
-    #     # Find server that gets free earliest
-    #     next_available = min(server_end_times)
-    #     server_idx = server_end_times.index(next_available)
-
-    #     # Start time is max(arrival time, server free time)
-
-    #Fixed the issue of assigning to the wrong server 179-191
-    # for i in range(len(arrival_times)):
-    #     # 1. Identify which servers are currently idle (free)
-    #     free_servers = [idx for idx, end_time in enumerate(server_end_times) if end_time <= arrival_times[i]]
-
-    #     if free_servers:
-    #         # 2. If servers are free, pick the one with the lowest index (Priority: S1 > S2 > S3)
-    #         server_idx = min(free_servers)
-    #         next_available = server_end_times[server_idx]
-    #     else:
-    #         # 3. If all busy, pick the one that finishes earliest
-    #         next_available = min(server_end_times)
-    #         server_idx = server_end_times.index(next_available)
-
-    #     # Start time is max(arrival time, next_available)
-    #     start_time = max(arrival_times[i], next_available)
-    #     end_time = start_time + service_times[i]
-
-    #     # Update that server’s end time
-    #     server_end_times[server_idx] = end_time
-
-    #     # Record info
-    #     service_start.append(start_time)
-    #     service_end.append(end_time)
-    #     server_assigned.append(f"S{server_idx + 1}")
 
     # --- Priority-Aware Scheduling Logic ---
     server_end_times = [0] * servers
@@ -284,7 +299,7 @@ def mms_simulation(lambda_val, mu_val, servers):
     return df
 
 # Simulation Table Container
-def show_table(parent_frame, df, lambda_val, mu_val, servers):
+def show_table(parent_frame, df, lambda_val, mu_val, servers, chunks=None):
     for widget in parent_frame.winfo_children():
         widget.destroy()
 
@@ -360,8 +375,15 @@ def show_table(parent_frame, df, lambda_val, mu_val, servers):
     table_frame = tk.Frame(table_wrapper, bg="#666633")
     table_frame.pack(anchor="center")
 
+    # cols = list(df.columns)
+    # total_cols = len(cols)
+# Filter columns: If Priority is disabled, remove the Priority column
     cols = list(df.columns)
+    if not use_priority_var.get() and "Priority" in cols:
+        cols.remove("Priority")
+    
     total_cols = len(cols)
+
 
     # Table header
     for j, col in enumerate(cols):
@@ -378,9 +400,10 @@ def show_table(parent_frame, df, lambda_val, mu_val, servers):
             bd=1
         ).grid(row=0, column=j, sticky="nsew")
 
-    # Table data rows
-    for i, row in enumerate(df.itertuples(index=False), start=1):
-        for j, val in enumerate(row):
+    # Table data rows (Using only the filtered columns)
+    for i, row in enumerate(df.to_dict('records'), start=1):
+        for j, col_name in enumerate(cols):
+            val = row[col_name]
             tk.Label(
                 table_frame,
                 text=val,
@@ -395,92 +418,79 @@ def show_table(parent_frame, df, lambda_val, mu_val, servers):
     for j in range(total_cols):
         table_frame.grid_columnconfigure(j, weight=1)
 
+
     if servers is not None and servers > 1:
+        # M/M/S still uses the standard DataFrame for now
         draw_mms_gantt(df, scrollable_frame)
     else:
-        draw_mm1_gantt(df, scrollable_frame)
+        # M/M/1 now uses the split 'chunks' to show Pause and Resume
+        draw_mm1_gantt(chunks, scrollable_frame)
 
     # Spacer at bottom
     tk.Label(scrollable_frame, text="", bg="#666633").pack(pady=40)
 
-#MM1 Gant Chart
-def draw_mm1_gantt(df, scrollable_frame):
-    # --- Gantt Chart (Equal box width, no outer border) ---
-    fig, ax = plt.subplots(figsize=(10, 2.8), facecolor="#666633")
+
+def draw_mm1_gantt(chunks, scrollable_frame):
+    if not chunks:
+        return
+
+    # 1. Build the full timeline including idle gaps
+    timeline = []
+    current_time = chunks[0][1]
+    for label, start, end in chunks:
+        if start > current_time:
+            timeline.append(("Idle", current_time, start))
+        timeline.append((label, start, end))
+        current_time = end
+
+    # 2. Setup colors
+    customer_colors = ["#A56A64", "#7D719B", "#818F6D", "#D18685", "#6379A1", "#A36E6E", "#AF7EA6"]
+    color_cycle = itertools.cycle(customer_colors)
+    cust_color_map = {}
+
+    # 3. Parameters for Wrapping
+    boxes_per_row = 10
+    box_width = 1.5
+    row_height_gap = 2.5 # Space between lines
+    total_boxes = len(timeline)
+    num_rows = math.ceil(total_boxes / boxes_per_row)
+
+    # Adjust figure size based on the number of rows
+    fig, ax = plt.subplots(figsize=(12, 3 * num_rows), facecolor="#666633")
     ax.set_facecolor("#666633")
 
-    if 'Service Start' in df.columns and 'Service End' in df.columns:
-        # Define 20 customer colors (distinct shades)
-        customer_colors = [
-            "#A56A64", "#7D719B", "#818F6D", "#D18685", "#6379A1",
-            "#A36E6E", "#AF7EA6", "#80B8AB", "#A0655B", "#85CEC6",
-            "#DDC48B", "#7677A3", "#916269", "#B89775", "#7CB4B1",
-            "#AF6C5F", "#609C9C", "#AA6C76", "#AD778F", "#6989AD"
-        ]
-        color_cycle = itertools.cycle(customer_colors)
+    # 4. Draw boxes in rows
+    for i, (label, start, end) in enumerate(timeline):
+        row_idx = i // boxes_per_row
+        col_idx = i % boxes_per_row
+        
+        # Calculate coordinates
+        x = col_idx * box_width
+        y = -row_idx * row_height_gap # Move down for each new row
+        
+        color = "#BBBBA0" if "Idle" in label else cust_color_map.setdefault(label, next(color_cycle))
+        
+        # Draw box
+        rect = plt.Rectangle((x, y), box_width, 1, facecolor=color, edgecolor="white", lw=1.5)
+        ax.add_patch(rect)
+        
+        # Add labels inside box
+        ax.text(x + box_width/2, y + 0.5, label, color="white", fontweight="bold", 
+                ha="center", va="center", fontsize=9)
+        
+        # Add start/end times below the box
+        ax.text(x, y - 0.3, str(int(start)), color="white", fontsize=8, ha="center")
+        ax.text(x + box_width, y - 0.3, str(int(end)), color="white", fontsize=8, ha="center")
 
-        # Build timeline (add idle gaps if any)
-        timeline = []
-        current_time = df['Service Start'].min()
+    # 5. Aesthetics
+    ax.set_xlim(-0.5, boxes_per_row * box_width + 0.5)
+    ax.set_ylim(-num_rows * row_height_gap + 1, 2)
+    ax.axis('off')
+    ax.set_title("Server Utilization Timeline", color="white", fontweight="bold", pad=20)
 
-        for i in range(len(df)):
-            s_start = df.loc[i, 'Service Start']
-            s_end = df.loc[i, 'Service End']
-            cust = f"C{df.loc[i, 'Observation']}"
-
-            # Add idle time if there’s a gap
-            if s_start > current_time:
-                timeline.append(("Idle", current_time, s_start))
-                current_time = s_start
-
-            # Add service time
-            timeline.append((cust, s_start, s_end))
-            current_time = s_end
-
-        total_boxes = len(timeline)
-        box_width = 1.5  # fixed equal width
-        x_pos = 0
-
-        for label, start, end in timeline:
-            if "C" in label:
-                color = next(color_cycle)  # get next customer color
-            else:
-                color = "#BBBBA0"  # idle box color
-
-            rect = plt.Rectangle((x_pos, 0), box_width, 1,
-                                 facecolor=color, edgecolor="white", lw=1.5)
-            ax.add_patch(rect)
-
-            # Box label (C1, Idle, etc.)
-            ax.text(x_pos + box_width / 2, 0.5, label,
-                    color="white", fontsize=9, fontweight="bold", ha="center", va="center")
-
-            # Start time (below left edge)
-            ax.text(x_pos, -0.25, str(int(start)),
-                    color="white", fontsize=8, ha="center", va="top")
-            # End time (below right edge)
-            ax.text(x_pos + box_width, -0.25, str(int(end)),
-                    color="white", fontsize=8, ha="center", va="top")
-
-            x_pos += box_width
-
-        # Aesthetics
-        ax.set_xlim(0, total_boxes * box_width)
-        ax.set_ylim(-0.5, 1.2)
-        ax.axis('off')
-        ax.set_title(
-            "Server Utilization Timeline",
-            fontdict={'family': 'Arial', 'size': 16, 'weight': 'bold', 'color': 'white'},
-            pad=10
-        )
-
-    # Display inside scrollable frame
-    gantt_canvas = FigureCanvasTkAgg(fig, master=scrollable_frame)
-    gantt_canvas.draw()
-    gantt_canvas.get_tk_widget().pack(pady=5, anchor="center")
-
-    # Spacer at bottom
-    tk.Label(scrollable_frame, text="", bg="#666633").pack(pady=40)
+    canvas = FigureCanvasTkAgg(fig, master=scrollable_frame)
+    canvas.draw()
+    canvas.get_tk_widget().pack(pady=10, fill="x")
 
 #MMS Gant Chart
 def draw_mms_gantt(df, scrollable_frame):
@@ -621,8 +631,8 @@ def mm1_input_page():
                 return
 
             # If stable, run simulation
-            df = mm1_simulation(lam, mu)
-            show_table(mm1_frame, df, lam, mu, servers=1)
+            df, chunks = mm1_simulation(lam, mu)
+            show_table(mm1_frame, df, lam, mu, servers=1, chunks=chunks)
 
         except ValueError:
             messagebox.showerror("Error", "Please enter valid numeric values.")
