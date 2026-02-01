@@ -56,7 +56,9 @@ def mm1_simulation(lambda_val, mu_val):
     obs_numbers = list(range(1, len(arrival_times) + 1))
 
     # --- New Columns: Service Time, Start Time, End Time ---
-    service_times = [round(-mu_val * math.log(np.random.rand())) for _ in range(len(arrival_times))]
+    # service_times = [round(-mu_val * math.log(np.random.rand())) for _ in range(len(arrival_times))]
+    # Fixed the zero service time issue
+    # service_times = [max(1, math.ceil(-mu_val * math.log(np.random.rand()))) for _ in range(len(arrival_times))]
     service_starts = [0] * len(arrival_times)
     service_ends = [0] * len(arrival_times)
 
@@ -156,7 +158,9 @@ def mms_simulation(lambda_val, mu_val, servers):
     obs_numbers = list(range(1, len(arrival_times) + 1))
 
     # --- Service times (Exponential Distribution) ---
-    service_times = [round(-mu_val * math.log(np.random.rand())) for _ in range(len(arrival_times))]
+    # service_times = [round(-mu_val * math.log(np.random.rand())) for _ in range(len(arrival_times))]
+    # Fixed the zero service time issue
+    # service_times = [max(1, math.ceil(-mu_val * math.log(np.random.rand()))) for _ in range(len(arrival_times))]
 
     # --- Multi-server scheduling logic ---
     server_end_times = [0] * servers  # track end time of each server
@@ -164,12 +168,28 @@ def mms_simulation(lambda_val, mu_val, servers):
     service_end = []
     server_assigned = []
 
-    for i in range(len(arrival_times)):
-        # Find server that gets free earliest
-        next_available = min(server_end_times)
-        server_idx = server_end_times.index(next_available)
+    # for i in range(len(arrival_times)):  
+    #     # Find server that gets free earliest
+    #     next_available = min(server_end_times)
+    #     server_idx = server_end_times.index(next_available)
 
-        # Start time is max(arrival time, server free time)
+    #     # Start time is max(arrival time, server free time)
+
+    #Fixed the issue of assigning to the wrong server 179-191
+    for i in range(len(arrival_times)):
+        # 1. Identify which servers are currently idle (free)
+        free_servers = [idx for idx, end_time in enumerate(server_end_times) if end_time <= arrival_times[i]]
+
+        if free_servers:
+            # 2. If servers are free, pick the one with the lowest index (Priority: S1 > S2 > S3)
+            server_idx = min(free_servers)
+            next_available = server_end_times[server_idx]
+        else:
+            # 3. If all busy, pick the one that finishes earliest
+            next_available = min(server_end_times)
+            server_idx = server_end_times.index(next_available)
+
+        # Start time is max(arrival time, next_available)
         start_time = max(arrival_times[i], next_available)
         end_time = start_time + service_times[i]
 
