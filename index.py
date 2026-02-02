@@ -411,21 +411,6 @@ def show_table(parent_frame, df, lambda_val, mu_val, servers, chunks=None):
     
     total_cols = len(cols)
 
-    # # Table header
-    # for j, col in enumerate(cols):
-    #     tk.Label(
-    #         table_frame,
-    #         text=col,
-    #         font=("Arial", 12, "bold"),
-    #         bg="#999966",
-    #         fg="white",
-    #         pady=6,
-    #         padx=20,
-    #         relief="flat",
-    #         highlightthickness=0,
-    #         bd=1
-    #     ).grid(row=0, column=j, sticky="nsew")
-
     # Table header loop - UPDATED FOR 2 LINES
     for j, col in enumerate(cols):
         # Set specific width based on column content
@@ -504,10 +489,6 @@ def draw_mm1_gantt(chunks, scrollable_frame):
         timeline.append((label, start, end))
         current_time = end
 
-    # # 2. Setup colors
-    # customer_colors = ["#A56A64", "#7D719B", "#818F6D", "#D18685", "#6379A1", "#A36E6E", "#AF7EA6"]
-    # color_cycle = itertools.cycle(customer_colors)
-    # cust_color_map = {}
 
     # 2. Setup colors - Using a larger palette for variety
     customer_colors = plt.cm.tab20.colors # Uses Matplotlib's 20-color palette
@@ -563,17 +544,6 @@ def draw_mm1_gantt(chunks, scrollable_frame):
     canvas.draw()
     canvas.get_tk_widget().pack(pady=0, fill="x")
 
-# def draw_mms_gantt(chunks, scrollable_frame, num_servers):
-#     if not chunks:
-#         return
-
-#     # 1. Setup colors
-#     customer_colors = ["#A56A64", "#7D719B", "#818F6D", "#D18685", "#6379A1", "#A36E6E", "#AF7EA6"]
-#     color_cycle = itertools.cycle(customer_colors)
-#     cust_color_map = {}
-
-#     # 2. Parameters for Layout
-#     boxes_per_row = 10
 def draw_mms_gantt(chunks, scrollable_frame, num_servers):
     if not chunks:
         return
