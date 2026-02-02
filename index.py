@@ -411,16 +411,38 @@ def show_table(parent_frame, df, lambda_val, mu_val, servers, chunks=None):
     
     total_cols = len(cols)
 
-    # Table header
+    # # Table header
+    # for j, col in enumerate(cols):
+    #     tk.Label(
+    #         table_frame,
+    #         text=col,
+    #         font=("Arial", 12, "bold"),
+    #         bg="#999966",
+    #         fg="white",
+    #         pady=6,
+    #         padx=20,
+    #         relief="flat",
+    #         highlightthickness=0,
+    #         bd=1
+    #     ).grid(row=0, column=j, sticky="nsew")
+
+    # Table header loop - UPDATED FOR 2 LINES
     for j, col in enumerate(cols):
+        # Set specific width based on column content
+        # CP columns need to be wider to prevent truncation seen in screenshots
+        col_width = 14 if "CP" in col else 12
+        
         tk.Label(
             table_frame,
             text=col,
-            font=("Arial", 12, "bold"),
+            font=("Arial", 11, "bold"),
             bg="#999966",
             fg="white",
-            pady=6,
-            padx=10,
+            pady=8,
+            padx=2,
+            width=col_width,      # Sets a consistent width for the column
+            wraplength=100,        # Forces text to wrap into 2 lines if too long
+            justify="center",     # Centers the two lines of text
             relief="flat",
             highlightthickness=0,
             bd=1
@@ -430,12 +452,17 @@ def show_table(parent_frame, df, lambda_val, mu_val, servers, chunks=None):
     for i, row in enumerate(df.to_dict('records'), start=1):
         for j, col_name in enumerate(cols):
             val = row[col_name]
+
+            # Use extra horizontal padding for decimal columns
+            h_pad = 20 if "CP" in col_name else 10
+
             tk.Label(
                 table_frame,
                 text=val,
                 font=("Arial", 11),
                 bg="#999966" if i % 2 == 0 else "#aaa977",
                 fg="white",
+                padx=h_pad, # Added horizontal padding to prevent text touching borders
                 relief="flat",
                 highlightthickness=0,
                 bd=0
