@@ -477,10 +477,20 @@ def draw_mm1_gantt(chunks, scrollable_frame):
         timeline.append((label, start, end))
         current_time = end
 
-    # 2. Setup colors
-    customer_colors = ["#A56A64", "#7D719B", "#818F6D", "#D18685", "#6379A1", "#A36E6E", "#AF7EA6"]
+    # # 2. Setup colors
+    # customer_colors = ["#A56A64", "#7D719B", "#818F6D", "#D18685", "#6379A1", "#A36E6E", "#AF7EA6"]
+    # color_cycle = itertools.cycle(customer_colors)
+    # cust_color_map = {}
+
+    # 2. Setup colors - Using a larger palette for variety
+    customer_colors = plt.cm.tab20.colors # Uses Matplotlib's 20-color palette
     color_cycle = itertools.cycle(customer_colors)
     cust_color_map = {}
+
+    # Pre-assign colors to every unique customer in the chunks
+    unique_customers = sorted(list(set(label for label, s, e in chunks if "C" in label)))
+    for cust in unique_customers:
+        cust_color_map[cust] = next(color_cycle)
 
     # 3. Parameters for Wrapping
     boxes_per_row = 10
@@ -526,14 +536,30 @@ def draw_mm1_gantt(chunks, scrollable_frame):
     canvas.draw()
     canvas.get_tk_widget().pack(pady=0, fill="x")
 
+# def draw_mms_gantt(chunks, scrollable_frame, num_servers):
+#     if not chunks:
+#         return
+
+#     # 1. Setup colors
+#     customer_colors = ["#A56A64", "#7D719B", "#818F6D", "#D18685", "#6379A1", "#A36E6E", "#AF7EA6"]
+#     color_cycle = itertools.cycle(customer_colors)
+#     cust_color_map = {}
+
+#     # 2. Parameters for Layout
+#     boxes_per_row = 10
 def draw_mms_gantt(chunks, scrollable_frame, num_servers):
     if not chunks:
         return
 
-    # 1. Setup colors
-    customer_colors = ["#A56A64", "#7D719B", "#818F6D", "#D18685", "#6379A1", "#A36E6E", "#AF7EA6"]
+    # 1. Setup global colors for all servers to share
+    customer_colors = plt.cm.tab20.colors
     color_cycle = itertools.cycle(customer_colors)
     cust_color_map = {}
+    
+    # Pre-assign colors to all customers across ALL chunks first
+    unique_customers = sorted(list(set(c[0] for c in chunks if "C" in c[0])))
+    for cust in unique_customers:
+        cust_color_map[cust] = next(color_cycle)
 
     # 2. Parameters for Layout
     boxes_per_row = 10
@@ -568,7 +594,9 @@ def draw_mms_gantt(chunks, scrollable_frame, num_servers):
             x = col_idx * box_width
             y = -row_idx * row_height_gap
             
-            color = "#BBBBA0" if "Idle" in label else cust_color_map.setdefault(label, next(color_cycle))
+            # color = "#BBBBA0" if "Idle" in label else cust_color_map.setdefault(label, next(color_cycle))
+            # Update this line inside the 'for label, start, end in timeline' loop:
+            color = "#BBBBA0" if "Idle" in label else cust_color_map.get(label, "#75754B")
             
             ax.add_patch(plt.Rectangle((x, y), box_width, 1, facecolor=color, edgecolor="white", lw=1.5))
             ax.text(x + box_width/2, y + 0.5, label, color="white", fontweight="bold", ha="center", va="center", fontsize=9)
