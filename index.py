@@ -444,6 +444,12 @@ def show_table(parent_frame, df, lambda_val, mu_val, servers, chunks=None):
     for j in range(total_cols):
         table_frame.grid_columnconfigure(j, weight=1)
 
+    # If it's MM1
+    if servers is None or servers == 1:
+        create_averages_frame(scrollable_frame, df, lambda_val, mu_val)
+    else:
+    # MMS case
+        create_averages_frame(scrollable_frame, df, lambda_val, mu_val, servers=servers)
 
     if servers is not None and servers > 1:
         # We must pass 'chunks' and the 'servers' count
@@ -479,12 +485,12 @@ def draw_mm1_gantt(chunks, scrollable_frame):
     # 3. Parameters for Wrapping
     boxes_per_row = 10
     box_width = 1.5
-    row_height_gap = 2.5 # Space between lines
+    row_height_gap = 1.5 # Space between lines
     total_boxes = len(timeline)
     num_rows = math.ceil(total_boxes / boxes_per_row)
 
     # Adjust figure size based on the number of rows
-    fig, ax = plt.subplots(figsize=(12, 3 * num_rows), facecolor="#666633")
+    fig, ax = plt.subplots(figsize=(12, 2 * num_rows), facecolor="#666633")
     ax.set_facecolor("#666633")
 
     # 4. Draw boxes in rows
@@ -514,11 +520,11 @@ def draw_mm1_gantt(chunks, scrollable_frame):
     ax.set_xlim(-0.5, boxes_per_row * box_width + 0.5)
     ax.set_ylim(-num_rows * row_height_gap + 1, 2)
     ax.axis('off')
-    ax.set_title("Server Utilization Timeline", color="white", fontweight="bold", pad=20)
+    ax.set_title("Server Utilization Timeline", color="white", fontweight="bold", pad=0)
 
     canvas = FigureCanvasTkAgg(fig, master=scrollable_frame)
     canvas.draw()
-    canvas.get_tk_widget().pack(pady=10, fill="x")
+    canvas.get_tk_widget().pack(pady=0, fill="x")
 
 def draw_mms_gantt(chunks, scrollable_frame, num_servers):
     if not chunks:
@@ -532,7 +538,7 @@ def draw_mms_gantt(chunks, scrollable_frame, num_servers):
     # 2. Parameters for Layout
     boxes_per_row = 10
     box_width = 1.5
-    row_height_gap = 2.5 
+    row_height_gap = 1.5 
 
     # 3. Draw a separate chart for each server
     for s_idx in range(num_servers):
@@ -552,7 +558,7 @@ def draw_mms_gantt(chunks, scrollable_frame, num_servers):
             current_time = end
 
         num_rows = math.ceil(len(timeline) / boxes_per_row)
-        fig, ax = plt.subplots(figsize=(12, 2.2 * num_rows), facecolor="#666633")
+        fig, ax = plt.subplots(figsize=(12, 2 * num_rows), facecolor="#666633")
         ax.set_facecolor("#666633")
 
         # 4. Draw boxes in rows for the current server
@@ -580,12 +586,145 @@ def draw_mms_gantt(chunks, scrollable_frame, num_servers):
             font=("Arial", 16, "bold"),
             fg="white",
             bg="#666633"
-        ).pack(pady=(20, 5))
+        ).pack(pady=(5, 0))
 
         canvas = FigureCanvasTkAgg(fig, master=scrollable_frame)
         canvas.draw()
-        canvas.get_tk_widget().pack(pady=(0, 20), fill="x")
+        canvas.get_tk_widget().pack(pady=(0, 0), fill="x")
 
+#M/M/1 AND M/M/S SIMULATION RESULTS 
+def create_averages_frame(parent_frame, df, lambda_val, mu_val, servers=None):
+    """
+    Creates a labeled frame under the table to show simulation averages,
+    updates the values immediately.
+    """
+    averages_frame = tk.LabelFrame(
+        parent_frame, text="Simulation Results",
+        font=("Arial", 16, "bold"), fg="white", bg="#666633",
+        bd=2, relief="groove", padx=20, pady=10,
+        width=int(parent_frame.winfo_screenwidth() * 0.4)
+    )
+    averages_frame.pack(pady=(0,20), anchor="center")  # bottom center under the table
+
+    # Create labels
+    lbl_avg_turnaround = tk.Label(averages_frame, text="0",font=("Arial", 13), bg="#666633", fg="white")
+    lbl_avg_wait = tk.Label(averages_frame, text="0",font=("Arial", 13), bg="#666633", fg="white")
+    lbl_avg_response = tk.Label(averages_frame, text="0",font=("Arial", 13), bg="#666633", fg="white")
+    lbl_avg_interarrival = tk.Label(averages_frame, text="0",font=("Arial", 13), bg="#666633", fg="white")
+    lbl_avg_service = tk.Label(averages_frame, text="0",font=("Arial", 13), bg="#666633", fg="white")
+    lbl_utilization = tk.Label(averages_frame, text="0",font=("Arial", 13), bg="#666633", fg="white")
+    lbl_total_customers = tk.Label(averages_frame, text="0",font=("Arial", 13), bg="#666633", fg="white")
+
+    # Labels grid
+    labels = [
+        ("Avg Turnaround Time:", lbl_avg_turnaround),
+        ("Avg Wait Time:", lbl_avg_wait),
+        ("Avg Response Time:", lbl_avg_response),
+        ("Avg Inter-arrival Time:", lbl_avg_interarrival),
+        ("Avg Service Time:", lbl_avg_service),
+        ("Server Utilization:", lbl_utilization),
+        ("Total Customers:", lbl_total_customers)
+    ]
+
+    for i, (text_label, value_label) in enumerate(labels):
+        tk.Label(averages_frame, text=text_label, bg="#666633", fg="white").grid(
+            row=i, column=0, sticky="w", padx=5, pady=2
+        )
+        value_label.grid(row=i, column=1, sticky="w", padx=5, pady=2)
+
+    # --- Update values immediately ---
+    if servers and servers > 1:
+        # MMS averages (if you have a separate function)
+        update_mms_averages(
+            df, lambda_val, mu_val, servers,
+            lbl_avg_turnaround,
+            lbl_avg_wait,
+            lbl_avg_response,
+            lbl_avg_interarrival,
+            lbl_avg_service,
+            lbl_utilization,
+            lbl_total_customers
+        )
+    else:
+        # MM1 averages
+        update_simulation_averages(
+            df, lambda_val, mu_val,
+            lbl_avg_turnaround,
+            lbl_avg_wait,
+            lbl_avg_response,
+            lbl_avg_interarrival,
+            lbl_avg_service,
+            lbl_utilization,
+            lbl_total_customers
+        )
+
+    return averages_frame  # in case you need to reference it later
+
+# M/M/1 SIMULATION RESULTS
+def update_simulation_averages(
+    df, lambda_val, mu_val,
+    lbl_avg_turnaround,
+    lbl_avg_wait,
+    lbl_avg_response,
+    lbl_avg_interarrival,
+    lbl_avg_service,
+    lbl_utilization,
+    lbl_total_customers
+):
+    avg_turnaround = df["Turnaround Time"].mean()
+    avg_wait = df["Wait Time"].mean()
+    avg_response = df["Response Time"].mean()
+    avg_interarrival = df["Inter-arrivals"].mean()
+    avg_service = df["Service Time"].mean()
+    total_busy = df['Service Time'].sum()
+    total_time = df['Service End'].max() - df['Service Start'].min()
+    server_utilization = (total_busy / total_time) * 100  # in %
+    total_customers = len(df)
+
+    lbl_avg_turnaround.config(text=f"{avg_turnaround:.2f}")
+    lbl_avg_wait.config(text=f"{avg_wait:.2f}")
+    lbl_avg_response.config(text=f"{avg_response:.2f}")
+    lbl_avg_interarrival.config(text=f"{avg_interarrival:.2f}")
+    lbl_avg_service.config(text=f"{avg_service:.2f}")
+    lbl_utilization.config(text=f"{server_utilization:.2f}%")
+    lbl_total_customers.config(text=str(total_customers))
+
+# M/M/S SIMULATION RESULTS
+def update_mms_averages(
+    df, lambda_val, mu_val, servers,
+    lbl_avg_turnaround,
+    lbl_avg_wait,
+    lbl_avg_response,
+    lbl_avg_interarrival,
+    lbl_avg_service,
+    lbl_utilization,
+    lbl_total_customers
+):
+    # --- Calculate averages ---
+    avg_turnaround = df["Turnaround Time"].mean()
+    avg_wait = df["Wait Time"].mean()
+    avg_response = df["Response Time"].mean()
+    avg_interarrival = df["Inter-arrivals"].mean()
+    avg_service = df["Service Time"].mean()
+    servers = df['Server'].nunique()
+    total_time_observed = df['Service End'].max() - df['Service Start'].min()  # overall simulation duration
+    # Calculate total busy time across all servers
+    total_busy_time = 0
+    for srv in df['Server'].unique():
+        srv_df = df[df['Server'] == srv]
+        total_busy_time += srv_df['Service End'].sum() - srv_df['Service Start'].sum()
+    # True utilization in %
+    server_utilization = (total_busy_time / (total_time_observed * servers)) * 100
+    total_customers = len(df)
+
+    # --- Update labels ---
+    lbl_avg_turnaround.config(text=f"{avg_turnaround:.2f}")
+    lbl_avg_wait.config(text=f"{avg_wait:.2f}")
+    lbl_avg_response.config(text=f"{avg_response:.2f}")
+    lbl_avg_interarrival.config(text=f"{avg_interarrival:.2f}")
+    lbl_avg_service.config(text=f"{avg_service:.2f}")
+    lbl_utilization.config(text=f"{server_utilization:.2f}%")
+    lbl_total_customers.config(text=str(total_customers))
 
 # MM1 Input page container
 def mm1_input_page():
