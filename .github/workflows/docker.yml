@@ -21,8 +21,7 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/mas-simulator:latest .
-
+         docker build -f docker/Dockerfile -t ${{ secrets.DOCKER_USERNAME }}/mas-simulator:latest .
       - name: Push Docker image
         run: |
           docker push ${{ secrets.DOCKER_USERNAME }}/mas-simulator:latest
