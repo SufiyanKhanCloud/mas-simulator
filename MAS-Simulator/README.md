@@ -3,7 +3,7 @@
 
 [![Next.js](https://img.shields.io/badge/Next.js-14+-black?logo=next.js)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?logo=typescript)](https://www.typescriptlang.org/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind-CSS-3.4-38B2AC?logo=tailwind-css)](https://tailwindcss.com/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 [![Vercel Deployment](https://img.shields.io/badge/Vercel-Live_Demo-000000?logo=vercel)](https://queue-simulator-typescript.vercel.app/)
 
 **MAS-Simulator** is a collaborative group project developed to model and visualize complex stochastic processes. This suite provides an interactive environment for analyzing multi-server system performance under various load conditions using Kendall's Notation.
