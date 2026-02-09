@@ -1,10 +1,13 @@
-
 # 🚀 MAS-Simulator: Advanced Multi-Server Queueing Engine
 
-[![Next.js](https://img.shields.io/badge/Next.js-14+-black?logo=next.js)](https://nextjs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?logo=typescript)](https://www.typescriptlang.org/)
+<div align="center">
+
+[![Next.js](https://img.shields.io/badge/next.js-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/typescript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
-[![Vercel Deployment](https://img.shields.io/badge/Vercel-Live_Demo-000000?logo=vercel)](https://queue-simulator-typescript.vercel.app/)
+[![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://queue-simulator-typescript.vercel.app/)
+
+</div>
 
 **MAS-Simulator** is a collaborative group project developed to model and visualize complex stochastic processes. This suite provides an interactive environment for analyzing multi-server system performance under various load conditions using Kendall's Notation.
 
