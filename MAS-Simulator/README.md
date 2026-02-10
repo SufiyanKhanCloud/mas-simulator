@@ -56,5 +56,3 @@ This project is a collective effort by my **Group**
 **UBIT, University of Karachi**
 
 *Under the guidance of our faculty members.*
-
-```
